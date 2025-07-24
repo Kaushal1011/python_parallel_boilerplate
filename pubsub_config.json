@@ -1,0 +1,8 @@
+{
+    "zmq_start_port": 7000,
+    "api_port": 8000,
+    "pattern": "pubsub",
+    "workers": [
+        {"module": "worker", "entrypoint": "pubsub_worker_main", "replicas": 2}
+    ]
+}

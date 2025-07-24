@@ -49,10 +49,27 @@ def worker_main(port: int, worker_id: int = 0):
         socket.send_json(response)
 
 
+def pubsub_worker_main(port: int, worker_id: int = 0):
+    """Entry point for workers using the PUB/SUB pattern."""
+    context = zmq.Context()
+    socket = context.socket(zmq.SUB)
+    socket.connect(f"tcp://127.0.0.1:{port}")
+    socket.setsockopt_string(zmq.SUBSCRIBE, "")
+    print(f"PubSub worker {worker_id} connected to port {port}")
+    while True:
+        message = socket.recv_json()
+        print(f"Worker {worker_id} received: {message}")
+        handle_request(message)
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python worker.py <port> [worker_id]")
+        print("Usage: python worker.py <port> [worker_id] [pattern]")
         sys.exit(1)
     port = int(sys.argv[1])
     worker_id = int(sys.argv[2]) if len(sys.argv) > 2 else 0
-    worker_main(port, worker_id)
+    pattern = sys.argv[3] if len(sys.argv) > 3 else "reqrep"
+    if pattern == "pubsub":
+        pubsub_worker_main(port, worker_id)
+    else:
+        worker_main(port, worker_id)
