@@ -4,6 +4,7 @@
 import subprocess
 import time
 from typing import Any, Dict
+from pathlib import Path
 
 import requests
 
@@ -12,8 +13,13 @@ SERVER_PORT = 8000
 
 
 def start_server() -> subprocess.Popen:
-    """Start the server defined in main.py and return the process handle."""
-    return subprocess.Popen(["python", "main.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    """Start the server with the distributed merge sort configuration."""
+    return subprocess.Popen([
+        "python",
+        "main.py",
+        "-c",
+        "sort_config.json",
+    ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
 
 def wait_for_server(port: int = SERVER_PORT, timeout: float = 10) -> bool:
@@ -40,7 +46,7 @@ def stop_process(proc: subprocess.Popen) -> None:
 
 
 def send_request(payload: Dict[str, Any]) -> Dict[str, Any]:
-    resp = requests.post(f"http://{SERVER_HOST}:{SERVER_PORT}/process", json=payload)
+    resp = requests.post(f"http://{SERVER_HOST}:{SERVER_PORT}/sort", json=payload)
     return resp.json()
 
 
@@ -53,17 +59,15 @@ def main() -> None:
                 print(proc.stdout.read())
             return
 
-        payloads = [{"value": i} for i in range(5)]
-        results = []
-        for payload in payloads:
-            try:
-                response = send_request(payload)
-            except Exception as exc:
-                response = {"error": str(exc)}
-            results.append((payload, response))
-
-        for payload, response in results:
-            print(f"{payload} -> {response}")
+        payload = {"values": [5, 2, 8, 1, 3, 7]}
+        try:
+            response = send_request(payload)
+        except Exception as exc:
+            response = {"error": str(exc)}
+        print(f"{payload} -> {response}")
+        output_file = response.get("output_file")
+        if output_file:
+            print(Path(output_file).read_text())
     finally:
         stop_process(proc)
 

@@ -16,37 +16,32 @@ def _load_entrypoint(module_name: str, entrypoint: str) -> Callable:
     return getattr(module, entrypoint)
 
 
-def start_workers(config) -> List[int]:
-    """Spawn worker processes as described in the configuration."""
-    start_port = config.get("zmq_start_port", 6000)
-    pattern = config.get("pattern", "reqrep")
-    worker_ports = []
+def start_workers(config):
+    """Spawn worker processes for the distributed merge sort."""
+    task_port = config.get("zmq_start_port", 7000)
+    result_port = config.get("result_port", task_port + 1)
+    workers = []
     processes = []
-    port = start_port
+    worker_id = 0
     for worker_conf in config.get("workers", []):
         replicas = worker_conf.get("replicas", 1)
-        default_entrypoint = "worker_main" if pattern == "reqrep" else "pubsub_worker_main"
-        entrypoint = worker_conf.get("entrypoint", default_entrypoint)
+        entrypoint = worker_conf.get("entrypoint", "worker_main")
         worker_fn = _load_entrypoint(worker_conf["module"], entrypoint)
-        for i in range(replicas):
-            p = Process(target=worker_fn, args=(port, i))
+        for _ in range(replicas):
+            p = Process(target=worker_fn, args=(task_port, result_port, worker_id))
             p.daemon = True
             p.start()
             processes.append(p)
-            if pattern == "reqrep":
-                worker_ports.append(port)
-                port += 1
-    if pattern == "pubsub":
-        # All workers share the same port in pub/sub mode
-        worker_ports.append(start_port)
-    return worker_ports, processes, pattern
+            workers.append(worker_id)
+            worker_id += 1
+    return workers, processes, task_port, result_port
 
 
 def main(config_path: str):
     config = json.loads(Path(config_path).read_text())
-    ports, procs, pattern = start_workers(config)
-    server.setup_sockets(ports, pattern)
-    print(f"Started workers on ports: {ports}")
+    worker_ids, procs, task_port, result_port = start_workers(config)
+    server.setup_sockets(task_port, result_port, worker_ids)
+    print(f"Started workers on port {task_port}")
     host = config.get("host", "0.0.0.0")
     api_port = config.get("api_port", 8000)
     try:
