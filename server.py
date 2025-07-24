@@ -60,3 +60,4 @@ async def process_endpoint(payload: dict):
         return {"status": "published"}
     else:
         return {"error": f"Unknown pattern: {_pattern}"}
+
