@@ -47,6 +47,7 @@ process.
 {
   "zmq_start_port": 6000,
   "api_port": 8000,
+  "pattern": "reqrep",  # or "pubsub"
   "workers": [
     {"module": "worker", "entrypoint": "worker_main", "replicas": 2}
   ]
