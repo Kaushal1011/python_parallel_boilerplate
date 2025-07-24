@@ -1,8 +1,6 @@
 {
-    "zmq_start_port": 7000,
-    "result_port": 7001,
-    "api_port": 8000,
-    "workers": [
-        {"module": "merge_sort_worker", "entrypoint": "worker_main", "replicas": 2}
-    ]
+	"zmq_start_port": 7000,
+	"result_port": 7001,
+	"api_port": 8000,
+	"workers": [{ "module": "merge_sort_worker", "entrypoint": "worker_main", "replicas": 8 }]
 }

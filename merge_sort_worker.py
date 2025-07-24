@@ -42,6 +42,7 @@ def worker_main(task_port: int, result_port: int, worker_id: int = 0):
         # Message format: "<id> <json>"
         _, payload_json = message.split(" ", 1)
         payload = json.loads(payload_json)
+        print(f"Worker {worker_id} received: {payload}")
         task_id = payload["task_id"]
         chunk = payload.get("chunk", [])
         sorted_chunk = merge_sort(chunk)
@@ -50,4 +51,5 @@ def worker_main(task_port: int, result_port: int, worker_id: int = 0):
             "worker_id": worker_id,
             "sorted": sorted_chunk,
         }
+        print(f"Worker {worker_id} sending sorted chunk: {sorted_chunk}")
         pub_socket.send_json(result)

@@ -28,7 +28,14 @@ def start_workers(config):
         entrypoint = worker_conf.get("entrypoint", "worker_main")
         worker_fn = _load_entrypoint(worker_conf["module"], entrypoint)
         for _ in range(replicas):
-            p = Process(target=worker_fn, args=(task_port, result_port, worker_id))
+            p = Process(
+                target=worker_fn,
+                kwargs={
+                    "task_port": task_port,
+                    "result_port": result_port,
+                    "worker_id": worker_id,
+                },
+            )
             p.daemon = True
             p.start()
             processes.append(p)
@@ -55,7 +62,8 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Launch API and workers")
-    parser.add_argument("-c", "--config", default="config.json",
-                        help="Path to configuration JSON file")
+    parser.add_argument(
+        "-c", "--config", default="config.json", help="Path to configuration JSON file"
+    )
     args = parser.parse_args()
     main(args.config)

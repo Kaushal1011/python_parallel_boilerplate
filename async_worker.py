@@ -2,10 +2,12 @@ import sys
 import asyncio
 import zmq.asyncio
 
+
 async def async_task(value: int, delay: float = 0.1) -> int:
     """Simulate an async operation for demonstration."""
     await asyncio.sleep(delay)
     return value * value
+
 
 async def handle_request(payload: dict) -> dict:
     """Process multiple values concurrently using asyncio."""
@@ -14,7 +16,8 @@ async def handle_request(payload: dict) -> dict:
     results = await asyncio.gather(*tasks)
     return {"results": results}
 
-async def worker_main(port: int, worker_id: int = 0):
+
+async def worker_main(task_port: int, result_port: int = None, worker_id: int = 0):
     """Entry point for the async worker."""
     context = zmq.asyncio.Context()
     socket = context.socket(zmq.REP)
@@ -26,6 +29,7 @@ async def worker_main(port: int, worker_id: int = 0):
         result = await handle_request(message)
         response = {"worker_id": worker_id, **result}
         await socket.send_json(response)
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
