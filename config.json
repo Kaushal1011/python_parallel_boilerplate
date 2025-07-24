@@ -1,0 +1,6 @@
+{
+    "zmq_start_port": 6000,
+    "workers": [
+        {"module": "worker", "entrypoint": "worker_main", "replicas": 2}
+    ]
+}
