@@ -12,9 +12,11 @@ function if desired.
 
 import sys
 import zmq
+import time
+import random
 
 
-def handle_request(payload: dict) -> dict:
+def handle_request(payload: dict, worker_id: int = None) -> dict:
     """Process a single request.
 
     Parameters
@@ -32,6 +34,8 @@ def handle_request(payload: dict) -> dict:
     # In real scenarios this function could do CPU intensive work,
     # call other services or spawn threads.  It must however remain
     # thread safe if threads are used.
+    time.sleep(random.uniform(0.1, 1.0))  # Simulate some processing delay
+    print(f"Processing payload: {payload} on worker {worker_id}")
     return {"result": payload}
 
 
@@ -44,7 +48,7 @@ def worker_main(port: int, worker_id: int = 0):
     while True:
         message = socket.recv_json()
         print(f"Worker {worker_id} received: {message}")
-        result = handle_request(message)
+        result = handle_request(message, worker_id=worker_id)
         response = {"worker_id": worker_id, **result}
         socket.send_json(response)
 

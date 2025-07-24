@@ -37,6 +37,7 @@ async def process_endpoint(payload: dict):
     port = worker_ports[_rr_counter % len(worker_ports)]
     sock = _sockets[port]
     await sock.send_json(payload)
+    # do not wait for a response if the worker is not expected to reply
     reply = await sock.recv_json()
     _rr_counter += 1
     return reply
