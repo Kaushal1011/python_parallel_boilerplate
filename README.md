@@ -58,3 +58,28 @@ You can point the launcher to a different configuration using:
 ```bash
 python main.py --config my_config.json
 ```
+
+## Asyncio worker example
+
+`async_worker.py` demonstrates how to perform concurrent work using `asyncio`.
+Instead of handling requests synchronously, it spawns multiple async tasks and
+awaits them in parallel using `asyncio.gather`. Enable it by using a
+configuration similar to:
+
+```json
+{
+  "zmq_start_port": 6000,
+  "api_port": 8000,
+  "workers": [
+    {"module": "async_worker", "entrypoint": "worker_main", "replicas": 2}
+  ]
+}
+```
+
+Send a payload containing a list of `values` and each worker will square them
+concurrently:
+
+```bash
+curl -X POST http://localhost:8000/process -H "Content-Type: application/json" \
+  -d '{"values": [1, 2, 3, 4]}'
+```
