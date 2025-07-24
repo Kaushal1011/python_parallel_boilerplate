@@ -24,10 +24,12 @@ The setup is intentionally simple and intended as a starting point for more comp
 
 ## Running
 
-Install the dependencies and run the main script:
+Install the dependencies inside a virtual environment and run the main script:
 
 ```bash
-pip install fastapi uvicorn pyzmq
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 python main.py
 ```
 
