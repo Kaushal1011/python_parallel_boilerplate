@@ -1,0 +1,9 @@
+{
+    "server_module": "examples.round_robin.server",
+    "pattern": "reqrep",
+    "zmq_start_port": 6000,
+    "api_port": 8000,
+    "workers": [
+        {"module": "examples.round_robin.worker", "entrypoint": "worker_main", "replicas": 3}
+    ]
+}

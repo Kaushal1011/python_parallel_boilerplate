@@ -8,7 +8,7 @@ import math
 
 app = FastAPI()
 
-# populated by main
+# populated by create_app
 _worker_ids: List[int] = []
 _task_port: int = 0
 _result_port: int = 0
@@ -31,6 +31,12 @@ def setup_sockets(task_port: int, result_port: int, worker_ids: List[int]):
     _sub_socket = _zmq_context.socket(zmq.SUB)
     _sub_socket.bind(f"tcp://127.0.0.1:{result_port}")
     _sub_socket.setsockopt_string(zmq.SUBSCRIBE, "")
+
+
+def create_app(task_port: int, result_port: int, worker_ids: List[int], **_):
+    """Factory used by the generic launcher."""
+    setup_sockets(task_port, result_port, worker_ids)
+    return app
 
 
 def close():
@@ -96,3 +102,8 @@ async def sort_endpoint(payload: dict):
         return {"error": "values must be a list"}
     output_file = await distribute_sort(values)
     return {"output_file": output_file}
+
+
+@app.on_event("shutdown")
+def _cleanup():
+    close()

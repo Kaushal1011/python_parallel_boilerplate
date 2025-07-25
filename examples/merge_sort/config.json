@@ -1,0 +1,10 @@
+{
+    "server_module": "examples.merge_sort.server",
+    "pattern": "pubsub",
+    "zmq_start_port": 7000,
+    "result_port": 7001,
+    "api_port": 8000,
+    "workers": [
+        {"module": "examples.merge_sort.worker", "entrypoint": "worker_main", "replicas": 8}
+    ]
+}

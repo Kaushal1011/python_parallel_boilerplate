@@ -18,7 +18,7 @@ def start_server() -> subprocess.Popen:
         "python",
         "main.py",
         "-c",
-        "sort_config.json",
+        "examples/merge_sort/config.json",
     ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
 

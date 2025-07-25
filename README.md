@@ -1,86 +1,69 @@
 # Python Parallel Boilerplate
 
-This repository provides a small but flexible example of how to combine a
-FastAPI server with multiple worker processes communicating via ZeroMQ.
+This repository provides a minimal framework for building parallel back‑end
+programs in Python.  A generic launcher starts a FastAPI server along with a
+configurable set of worker processes that communicate over ZeroMQ.  The
+boilerplate can be reused for many kinds of tasks by plugging in your own worker
+and server modules.
 
-## Overview
+Two complete examples are included under `examples/`:
 
-`main.py` starts a FastAPI application and a configurable number of worker
-processes. Each worker listens on its own ZeroMQ `REP` socket. The FastAPI
-server forwards API requests to the workers over `REQ` sockets using a
-round‑robin strategy. Workers are loaded dynamically which makes it easy to
-reuse the boilerplate for different kinds of tasks.
-
-The setup is intentionally simple and intended as a starting point for more complex multiprocessing systems.
-
-## Files
-
-- `config.json` – defines how many workers to start, their modules and the
-  base port for ZeroMQ sockets.
-- `worker.py` – example worker module. Receives JSON messages and echoes them
-  back. Use it as a template for your own workers.
-- `server.py` – FastAPI application that sends incoming requests to workers via ZeroMQ.
-- `main.py` – reads the configuration, launches workers, and runs the FastAPI server.
+* **Merge sort** – demonstrates a distributed merge sort using the PUB/SUB
+  pattern.
+* **Round robin counter** – shows how to dispatch tasks to workers in a
+  round‑robin fashion while sharing a counter using a mutex.
 
 ## Running
 
-Install the dependencies inside a virtual environment and run the main script:
+Create a virtual environment and install dependencies:
 
 ```bash
 python -m venv .venv
-source .venv/Scripts/activate
+source .venv/bin/activate
 pip install -r requirements.txt
-python main.py
 ```
 
-By default the API server listens on `http://localhost:8000`. Send a POST
-request to `/process` with any JSON payload and it will be processed by one of
-the workers.
+### Merge sort
 
-## Configuration
-
-Workers are defined in `config.json`. Each entry specifies the module to import
-and optionally the entrypoint function that should be executed in a separate
-process.
-
-```json
-{
-  "zmq_start_port": 6000,
-  "api_port": 8000,
-  "pattern": "reqrep",  # or "pubsub"
-  "workers": [
-    {"module": "worker", "entrypoint": "worker_main", "replicas": 2}
-  ]
-}
-```
-
-You can point the launcher to a different configuration using:
+Launch the merge sort API server:
 
 ```bash
-python main.py --config my_config.json
+python main.py -c examples/merge_sort/config.json
 ```
 
-## Asyncio worker example
-
-`async_worker.py` demonstrates how to perform concurrent work using `asyncio`.
-Instead of handling requests synchronously, it spawns multiple async tasks and
-awaits them in parallel using `asyncio.gather`. Enable it by using a
-configuration similar to:
-
-```json
-{
-  "zmq_start_port": 6000,
-  "api_port": 8000,
-  "workers": [
-    {"module": "async_worker", "entrypoint": "worker_main", "replicas": 2}
-  ]
-}
-```
-
-Send a payload containing a list of `values` and each worker will square them
-concurrently:
+Send a list of numbers to sort:
 
 ```bash
-curl -X POST http://localhost:8000/process -H "Content-Type: application/json" \
-  -d '{"values": [1, 2, 3, 4]}'
+curl -X POST http://localhost:8000/sort -H "Content-Type: application/json" \
+  -d '{"values": [5, 2, 8, 1, 3]}'
 ```
+
+The sorted output is written to a file inside the `output` directory.
+
+### Round robin counter
+
+Start the example with:
+
+```bash
+python examples/round_robin/main.py
+```
+
+Each request to `/increment` is sent to the workers in round‑robin order.
+Workers increment a shared counter protected by a `Lock`.  Query the current
+value via `/counter`:
+
+```bash
+curl -X POST http://localhost:8000/increment -H "Content-Type: application/json" \
+  -d '{"value": 1}'
+curl http://localhost:8000/counter
+```
+
+## Creating your own program
+
+1. Write a worker module with a `worker_main` function.  It should accept at
+   least the arguments `port` and `worker_id` (for `reqrep`) or `task_port`,
+   `result_port` and `worker_id` (for `pubsub`).
+2. Write a server module exposing `create_app(...)` that returns a FastAPI app.
+3. Create a configuration JSON file listing your workers and server module.
+4. Run `python main.py -c path/to/your_config.json` or call
+   `boilerplate.run_server()` directly if you need to pass shared objects.
