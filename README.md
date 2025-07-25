@@ -84,3 +84,38 @@ concurrently:
 curl -X POST http://localhost:8000/process -H "Content-Type: application/json" \
   -d '{"values": [1, 2, 3, 4]}'
 ```
+
+## Generic PUB/SUB task example
+
+`generic_worker.py` and `generic_server.py` show how to distribute arbitrary
+tasks using ZeroMQ's PUB/SUB pattern. Each worker subscribes to its ID as the
+topic and the server publishes tasks in a round‑robin fashion. A background
+listener in the server collects worker results so multiple tasks can be
+processed concurrently over a second PUB/SUB socket.
+
+Use the provided `generic_config.json`:
+
+```json
+{
+  "zmq_start_port": 7000,
+  "result_port": 7001,
+  "api_port": 8000,
+  "server_module": "generic_server",
+  "workers": [
+    {"module": "generic_worker", "entrypoint": "worker_main", "replicas": 3}
+  ]
+}
+```
+
+Then run:
+
+```bash
+python main.py --config generic_config.json
+```
+
+Send a task describing the operation and data to process:
+
+```bash
+curl -X POST http://localhost:8000/task -H "Content-Type: application/json" \
+  -d '{"operation": "square", "data": 5}'
+```

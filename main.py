@@ -7,7 +7,6 @@ import uvicorn
 from pathlib import Path
 from typing import List, Callable
 
-import server
 
 
 def _load_entrypoint(module_name: str, entrypoint: str) -> Callable:
@@ -46,13 +45,14 @@ def start_workers(config):
 
 def main(config_path: str):
     config = json.loads(Path(config_path).read_text())
+    server_module = importlib.import_module(config.get("server_module", "server"))
     worker_ids, procs, task_port, result_port = start_workers(config)
-    server.setup_sockets(task_port, result_port, worker_ids)
+    server_module.setup_sockets(task_port, result_port, worker_ids)
     print(f"Started workers on port {task_port}")
     host = config.get("host", "0.0.0.0")
     api_port = config.get("api_port", 8000)
     try:
-        uvicorn.run(server.app, host=host, port=api_port)
+        uvicorn.run(server_module.app, host=host, port=api_port)
     finally:
         for p in procs:
             p.terminate()
