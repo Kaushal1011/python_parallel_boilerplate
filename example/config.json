@@ -1,0 +1,5 @@
+{
+	"zmq_start_port": 6000,
+	"pattern": "reqrep",
+	"workers": [{ "module": "worker", "entrypoint": "worker_main", "replicas": 2 }]
+}

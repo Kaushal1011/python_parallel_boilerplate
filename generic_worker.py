@@ -1,9 +1,11 @@
 import json
 import zmq
 import time
+import random
 
 
 def execute_task(operation, data):
+    time.sleep(random.uniform(0.05, 0.2))  # Simulate variable processing time
     """Perform a simple operation on the given data."""
     if operation == "square":
         time.sleep(0.1)
@@ -35,10 +37,12 @@ def worker_main(task_port: int, result_port: int, worker_id: int = 0):
         payload = json.loads(payload_json)
         operation = payload.get("operation")
         data = payload.get("data")
+        # print(f"Worker {worker_id} received: {payload}")
         result_data = execute_task(operation, data)
         result = {
             "task_id": payload["task_id"],
             "worker_id": worker_id,
             "result": result_data,
         }
+        # print(f"Worker {worker_id} task id {payload['task_id']}")
         pub_socket.send_json(result)
